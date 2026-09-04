@@ -39,6 +39,14 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Validate Netlify credentials
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          test -n "$NETLIFY_AUTH_TOKEN" || (echo "NETLIFY_AUTH_TOKEN is missing" && exit 1)
+          test -n "$NETLIFY_SITE_ID" || (echo "NETLIFY_SITE_ID is missing" && exit 1)
+
       - name: Deploy production to Netlify
         if: github.event_name == 'push'
         run: npx netlify-cli deploy --dir=dist --prod --site=$NETLIFY_SITE_ID --auth=$NETLIFY_AUTH_TOKEN
