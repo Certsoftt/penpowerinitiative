@@ -1,6 +1,7 @@
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom'
 import { ArrowRight, Mail, Phone, MapPin, Globe, Camera, Send, BriefcaseBusiness } from 'lucide-react'
 import { siteConfig } from '../data/siteData'
+import { blogPosts } from '../data/siteData'
 import { recordPageView } from '../lib/firebase'
 import { useEffect } from 'react'
 
@@ -21,11 +22,85 @@ const socialIconMap = {
   linkedin: BriefcaseBusiness,
 }
 
+const seoPages = {
+  '/': {
+    title: 'Pen-Power Initiative | Raising a Conscious Generation',
+    description: 'Pen-Power Initiative empowers children, teens, and young adults through literacy, mentorship, leadership development, and community outreach.',
+  },
+  '/about': {
+    title: 'About Pen-Power Initiative | Our Mission and Vision',
+    description: 'Learn how Pen-Power Initiative helps young people grow with purpose through education, values, confidence, and leadership development.',
+  },
+  '/events': {
+    title: 'Events and Outreach Programmes | Pen-Power Initiative',
+    description: 'Discover upcoming seminars, mentorship programmes, literacy campaigns, and community events from Pen-Power Initiative.',
+  },
+  '/blog': {
+    title: 'Insights on Education, Mentorship and Leadership | Pen-Power Initiative',
+    description: 'Read practical insights on literacy, mentorship, personal development, and purpose-driven leadership for the next generation.',
+  },
+  '/contact': {
+    title: 'Contact Pen-Power Initiative | Get Involved',
+    description: 'Contact Pen-Power Initiative to support youth development, volunteer, collaborate, or learn more about our community programmes.',
+  },
+  '/donate': {
+    title: 'Donate to Pen-Power Initiative | Support Young People',
+    description: 'Support literacy, mentorship, leadership, and outreach programmes that help children and young adults grow with purpose.',
+  },
+  '/admin/login': {
+    title: 'Admin Login | Pen-Power Initiative',
+    description: 'Secure administration portal for Pen-Power Initiative content and programme management.',
+    noIndex: true,
+  },
+}
+
+function updateMetaTag(attribute, value, content) {
+  let tag = document.head.querySelector(`meta[${attribute}="${value}"]`)
+  if (!tag) {
+    tag = document.createElement('meta')
+    tag.setAttribute(attribute, value)
+    document.head.appendChild(tag)
+  }
+  tag.setAttribute('content', content)
+}
+
+function updateLinkTag(rel, href) {
+  let tag = document.head.querySelector(`link[rel="${rel}"]`)
+  if (!tag) {
+    tag = document.createElement('link')
+    tag.setAttribute('rel', rel)
+    document.head.appendChild(tag)
+  }
+  tag.setAttribute('href', href)
+}
+
 export function AppLayout() {
   const location = useLocation()
 
   useEffect(() => {
     recordPageView(location.pathname)
+  }, [location.pathname])
+
+  useEffect(() => {
+    const blogPost = location.pathname.startsWith('/blog/')
+      ? blogPosts.find((post) => `/blog/${post.id}` === location.pathname)
+      : null
+    const page = blogPost
+      ? { title: `${blogPost.title} | Pen-Power Initiative`, description: blogPost.excerpt }
+      : seoPages[location.pathname] || seoPages['/']
+    const url = `${window.location.origin}${location.pathname}`
+    document.title = page.title
+    updateMetaTag('name', 'description', page.description)
+    updateMetaTag('name', 'robots', page.noIndex ? 'noindex, nofollow' : 'index, follow')
+    updateMetaTag('property', 'og:title', page.title)
+    updateMetaTag('property', 'og:description', page.description)
+    updateMetaTag('property', 'og:type', blogPost ? 'article' : 'website')
+    updateMetaTag('property', 'og:url', url)
+    updateMetaTag('property', 'og:site_name', siteConfig.brandName)
+    updateMetaTag('name', 'twitter:card', 'summary_large_image')
+    updateMetaTag('name', 'twitter:title', page.title)
+    updateMetaTag('name', 'twitter:description', page.description)
+    updateLinkTag('canonical', url)
   }, [location.pathname])
 
   return (
